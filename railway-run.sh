@@ -17,8 +17,8 @@ while true; do
     log "supervisord stopped (exit ${code}); exiting 1 so Railway restarts the service"
     exit 1
   fi
-  if pgrep -f 'gunicorn --config' >/dev/null && pgrep -x nginx >/dev/null \
-     && curl -fsS -m 10 -o /dev/null "http://127.0.0.1:${PORT}/api/health"; then
+  # /api/health goes through nginx to gunicorn and checks Postgres.
+  if curl -fsS -m 10 -o /dev/null "http://127.0.0.1:${PORT}/api/health"; then
     misses=0
   else
     misses=$((misses + 1))
