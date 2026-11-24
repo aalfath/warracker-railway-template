@@ -21,6 +21,13 @@ fi
 # nginx listens on $PORT instead of 80.
 sed -i -E "s/listen (\[::\]:)?[0-9]+;/listen \1${PORT};/" /etc/nginx/conf.d/default.conf.template
 
+# Railway's edge connects from 100.64.0.0/10; take the visitor's address from
+# X-Forwarded-For so the app's per-IP login rate limit applies per visitor
+# instead of locking everyone out together.
+if ! grep -q "set_real_ip_from" /etc/nginx/conf.d/default.conf.template; then
+  sed -i "0,/server_name localhost;/s//server_name localhost;\n    set_real_ip_from 100.64.0.0\/10;\n    real_ip_header X-Forwarded-For;/" /etc/nginx/conf.d/default.conf.template
+fi
+
 # One nginx worker per CPU the service really has (Railway shows the host's CPUs).
 cpus=1
 if [ -r /sys/fs/cgroup/cpu.max ]; then
